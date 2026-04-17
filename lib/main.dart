@@ -8,6 +8,7 @@ import 'core/theme/theme_provider.dart';
 import 'features/auth/presentation/login_page.dart';
 import 'features/home/presentation/home_page.dart';
 import 'features/auth/presentation/register_page.dart';
+import 'features/profile/presentation/pages/profile_page.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -34,6 +35,7 @@ class MyApp extends ConsumerWidget {
         '/login': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
         '/register': (context) => RegisterPage(),
+        '/profile': (context) => const ProfilePage(),
       },
     );
   }
