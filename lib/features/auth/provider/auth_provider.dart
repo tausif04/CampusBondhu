@@ -1,29 +1,20 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-final authProvider = Provider<AuthService>((ref) {
-  return AuthService();
-});
+class AuthNotifier extends ChangeNotifier {
+  bool isLoggedIn = false;
 
-class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-
-  //  LOGIN
   Future<bool> login(String email, String password) async {
-    try {
-      await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+    await Future.delayed(const Duration(milliseconds: 800));
+
+    if (email.isNotEmpty && password.length >= 6) {
+      isLoggedIn = true;
+      notifyListeners(); // 🔥 triggers router
       return true;
-    } catch (e) {
-      return false;
     }
+    return false;
   }
 
-  //  REGISTER
   Future<bool> register(
     String email,
     String password,
@@ -32,23 +23,22 @@ class AuthService {
     String department,
     String year,
   ) async {
-    try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+    await Future.delayed(const Duration(milliseconds: 800));
 
-      await _db.collection('users').doc(userCredential.user!.uid).set({
-        'name': name,
-        'email': email,
-        'university': university,
-        'department': department,
-        'year': year,
-      });
-
+    if (email.isNotEmpty && password.length >= 6) {
+      isLoggedIn = true;
+      notifyListeners(); // 🔥 triggers router
       return true;
-    } catch (e) {
-      return false;
     }
+    return false;
+  }
+
+  void logout() {
+    isLoggedIn = false;
+    notifyListeners();
   }
 }
+
+final authProvider = ChangeNotifierProvider<AuthNotifier>((ref) {
+  return AuthNotifier();
+});

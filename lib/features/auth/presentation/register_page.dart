@@ -1,272 +1,152 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../provider/auth_provider.dart';
+import 'package:go_router/go_router.dart';
 
-class RegisterPage extends StatefulWidget {
+class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
-  final _formKey = GlobalKey<FormState>();
-
-  final nameController = TextEditingController();
+class _RegisterPageState extends ConsumerState<RegisterPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final nameController = TextEditingController();
+  final universityController = TextEditingController();
+  final departmentController = TextEditingController();
+  final yearController = TextEditingController();
 
-  String? selectedUniversity;
-  String? selectedYear;
+  bool isLoading = false;
 
-  bool obscurePassword = true;
-  File? imageFile;
-
-  final universities = ["DU", "BUET", "NSU", "BRAC", "AIUB"];
-  final years = ["1st", "2nd", "3rd", "4th"];
-
-  // 📸 Image Picker
-  Future<void> pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => imageFile = File(picked.path));
+  Future<void> handleRegister() async {
+    // 🔍 simple validation
+    if (emailController.text.isEmpty ||
+        passwordController.text.length < 6 ||
+        nameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all fields correctly")),
+      );
+      return;
     }
-  }
 
-  // 💾 Save Locally
-  Future<void> saveUser() async {
-    final prefs = await SharedPreferences.getInstance();
+    setState(() => isLoading = true);
 
-    await prefs.setString('name', nameController.text);
-    await prefs.setString('email', emailController.text);
-    await prefs.setString('university', selectedUniversity ?? "");
-    await prefs.setString('year', selectedYear ?? "");
+    final success = await ref
+        .read(authProvider)
+        .register(
+          emailController.text.trim(),
+          passwordController.text.trim(),
+          nameController.text.trim(),
+          universityController.text.trim(),
+          departmentController.text.trim(),
+          yearController.text.trim(),
+        );
+
+    setState(() => isLoading = false);
+
+    if (!success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Registration failed")));
+    }
+    // ✅ No navigation → router handles redirect
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 25,
-                    offset: const Offset(0, 10),
-                  )
-                ],
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
+      appBar: AppBar(title: const Text("Register")),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
 
-                    const Text(
-                      "Create Account",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // 📸 Profile Image
-                    GestureDetector(
-                      onTap: pickImage,
-                      child: CircleAvatar(
-                        radius: 42,
-                        backgroundColor: Colors.grey[200],
-                        backgroundImage:
-                            imageFile != null ? FileImage(imageFile!) : null,
-                        child: imageFile == null
-                            ? const Icon(Icons.camera_alt, size: 28)
-                            : null,
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _input(nameController, "Full Name", Icons.person),
-                    _input(emailController, "Email", Icons.email),
-
-                    // 🔐 Password Field
-                    TextFormField(
-                      controller: passwordController,
-                      obscureText: obscurePassword,
-                      validator: (v) =>
-                          v!.length < 6 ? "Min 6 characters" : null,
-                      decoration: InputDecoration(
-                        labelText: "Password",
-                        prefixIcon: const Icon(Icons.lock),
-                        suffixIcon: IconButton(
-                          icon: Icon(obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off),
-                          onPressed: () {
-                            setState(() =>
-                                obscurePassword = !obscurePassword);
-                          },
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // 🎯 University Dropdown
-                    DropdownButtonFormField(
-                      value: selectedUniversity,
-                      decoration: InputDecoration(
-                        labelText: "University",
-                        prefixIcon: const Icon(Icons.school),
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      items: universities
-                          .map((u) =>
-                              DropdownMenuItem(value: u, child: Text(u)))
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => selectedUniversity = v),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // 🎯 Year Dropdown
-                    DropdownButtonFormField(
-                      value: selectedYear,
-                      decoration: InputDecoration(
-                        labelText: "Year",
-                        prefixIcon: const Icon(Icons.calendar_today),
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      items: years
-                          .map((y) =>
-                              DropdownMenuItem(value: y, child: Text(y)))
-                          .toList(),
-                      onChanged: (v) =>
-                          setState(() => selectedYear = v),
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    // 🚀 PREMIUM BUTTON
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 52, // ✅ fixed height for consistency
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF4F46E5), Color(0xFF06B6D4)],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.25),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              )
-                            ],
-                          ),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent, // 👈 important
-                              shadowColor: Colors.transparent,     // 👈 remove default shadow
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                            onPressed: () async {
-                              if (!_formKey.currentState!.validate()) return;
-
-                              if (selectedUniversity == null || selectedYear == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Select all fields")),
-                                );
-                                return;
-                              }
-
-                              await saveUser();
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Registered Successfully")),
-                              );
-
-                              Navigator.pushReplacementNamed(context, '/login');
-                            },
-                            child: const Text(
-                              "Register",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/login');
-                      },
-                      child: const Text("Back to Login"),
-                    )
-                  ],
-                ),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: "Name",
+                border: OutlineInputBorder(),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
+            const SizedBox(height: 12),
 
-  Widget _input(TextEditingController c, String label, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: c,
-        validator: (v) => v!.isEmpty ? "Required" : null,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon),
-          filled: true,
-          fillColor: Colors.grey[100],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: "Password",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: universityController,
+              decoration: const InputDecoration(
+                labelText: "University",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: departmentController,
+              decoration: const InputDecoration(
+                labelText: "Department",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: yearController,
+              decoration: const InputDecoration(
+                labelText: "Year",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // 🔥 Register Button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : handleRegister,
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text("Register"),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // 🔁 Back to Login
+            TextButton(
+              onPressed: () {
+                context.go('/login');
+              },
+              child: const Text("Already have an account? Login"),
+            ),
+          ],
         ),
       ),
     );

@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import 'core/theme/light_theme.dart';
-import 'core/theme/dark_theme.dart';
-import 'core/theme/theme_provider.dart';
-
-import 'features/auth/presentation/login_page.dart';
-import 'features/home/presentation/home_page.dart';
-import 'features/auth/presentation/register_page.dart';
-import 'features/profile/presentation/pages/profile_page.dart';
+import 'core/router/app_router.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -19,24 +11,18 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeProvider);
+    final router = ref.watch(appRouterProvider);
 
-    return MaterialApp(
+    return MaterialApp.router(
+      routerConfig: router,
       debugShowCheckedModeBanner: false,
-      title: 'CampusBondhu',
+      title: 'Campus Bondhu',
 
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: themeMode,
-
-      initialRoute: '/login',
-
-      routes: <String, WidgetBuilder>{
-        '/login': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
-        '/register': (context) => RegisterPage(),
-        '/profile': (context) => const ProfilePage(),
-      },
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+      ),
     );
   }
 }
