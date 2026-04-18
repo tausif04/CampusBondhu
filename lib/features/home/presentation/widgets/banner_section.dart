@@ -17,7 +17,7 @@ class BannerSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Welcome to\nCampusConnect",
+            "Welcome to\nCampus Bondhu",
             style: TextStyle(
               color: Colors.white,
               fontSize: 26,
