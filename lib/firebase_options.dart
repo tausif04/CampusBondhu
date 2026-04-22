@@ -37,13 +37,12 @@ class DefaultFirebaseOptions {
   // ── REPLACE every value below with your real Firebase config ──────────────
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDEMO_REPLACE_WITH_YOUR_WEB_API_KEY',
-    appId: '1:000000000000:web:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'campusbondhu-demo',           // ← your Firebase project ID
-    authDomain: 'campusbondhu-demo.firebaseapp.com',
-    storageBucket: 'campusbondhu-demo.appspot.com',
-  );
+      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
+      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
+      projectId: "campusbondhu-a2d5b",
+      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
+      messagingSenderId: "8036376123",
+      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDEMO_REPLACE_WITH_YOUR_ANDROID_API_KEY',
