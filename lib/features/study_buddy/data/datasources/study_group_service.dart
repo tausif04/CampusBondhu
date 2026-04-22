@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campusbondhu/core/constants/app_constants.dart';
 import 'package:campusbondhu/features/study_buddy/data/models/study_group_model.dart';
 
-final studyGroupServiceProvider = Provider<StudyGroupService>((ref) => StudyGroupService());
+final studyGroupServiceProvider =
+    Provider<StudyGroupService>((ref) => StudyGroupService());
 
 class StudyGroupService {
   final _db = FirebaseFirestore.instance;
-  CollectionReference get _groups => _db.collection(AppConstants.studyGroupsCollection);
-  CollectionReference get _messages => _db.collection(AppConstants.messagesCollection);
+  CollectionReference get _groups =>
+      _db.collection(AppConstants.studyGroupsCollection);
+  CollectionReference get _messages =>
+      _db.collection(AppConstants.messagesCollection);
 
   // Stream all groups
   Stream<List<StudyGroupModel>> getGroups() {
@@ -57,14 +60,22 @@ class StudyGroupService {
     return members.contains(userId);
   }
 
-  // Send message
+  // Send message — uses serverTimestamp so ordering is always accurate
   Future<void> sendMessage(MessageModel message) async {
     final batch = _db.batch();
 
     final msgRef = _messages.doc();
-    batch.set(msgRef, message.toFirestore());
+    // Use server timestamp for reliable ordering across devices/timezones
+    final msgData = {
+      'groupId': message.groupId,
+      'senderId': message.senderId,
+      'senderName': message.senderName,
+      'senderImage': message.senderImage,
+      'text': message.text,
+      'timestamp': FieldValue.serverTimestamp(), // ← server time, not device
+    };
+    batch.set(msgRef, msgData);
 
-    // Update group last message
     batch.update(_groups.doc(message.groupId), {
       'lastMessage': message.text,
       'lastMessageTime': FieldValue.serverTimestamp(),
@@ -73,7 +84,9 @@ class StudyGroupService {
     await batch.commit();
   }
 
-  // Stream messages for group
+  // Stream messages — ordered by timestamp (requires composite index)
+  // Index needed: groupId ASC + timestamp ASC
+  // Create at: Firebase Console → Firestore → Indexes → Add composite index
   Stream<List<MessageModel>> getMessages(String groupId) {
     return _messages
         .where('groupId', isEqualTo: groupId)
