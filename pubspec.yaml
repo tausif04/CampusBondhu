@@ -1,0 +1,61 @@
+name: campusbondhu
+description: Campus-based student networking and collaboration platform
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase — all packages must be upgraded together as a matching set.
+  # firebase_auth >=5.x and firebase_storage >=12.x require firebase_core >=3.x
+  # which ships its own firebase_core_web that removed the old JS interop
+  # helpers (PromiseJsImpl, handleThenable, dartify, jsify). Using mismatched
+  # versions causes those "Type not found / Method not found" compile errors.
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.2
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Routing
+  go_router: ^14.3.0
+
+  # UI
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+  cached_network_image: ^3.4.1
+  image_picker: ^1.1.2
+  shimmer: ^3.0.0
+  lottie: ^3.1.2
+  flutter_svg: ^2.0.10+1
+  badges: ^3.1.2
+  intl: ^0.19.0
+  timeago: ^3.7.0
+
+  # Utils
+  uuid: ^4.5.1
+  equatable: ^2.0.5
+  dartz: ^0.10.1
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.4.3
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

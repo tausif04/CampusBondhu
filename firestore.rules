@@ -1,0 +1,130 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =============================================
+    // Helper Functions
+    // =============================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    function isMember(members) {
+      return request.auth.uid in members;
+    }
+
+    // =============================================
+    // Users Collection
+    // =============================================
+    match /users/{userId} {
+      // Anyone authenticated can read user profiles
+      allow read: if isAuthenticated();
+
+      // Only the user themselves can create their profile
+      allow create: if isOwner(userId);
+
+      // User can update their own profile; admin can update any
+      allow update: if isOwner(userId) || isAdmin();
+
+      // Only admin can delete
+      allow delete: if isAdmin();
+    }
+
+    // =============================================
+    // Study Groups Collection
+    // =============================================
+    match /study_groups/{groupId} {
+      // Any authenticated user can read groups
+      allow read: if isAuthenticated();
+
+      // Any authenticated user can create a group
+      allow create: if isAuthenticated() &&
+        request.resource.data.createdById == request.auth.uid;
+
+      // Members can update (join/leave/chat updates); creator or admin can fully update
+      allow update: if isAuthenticated() && (
+        isMember(resource.data.members) ||
+        isOwner(resource.data.createdById) ||
+        isAdmin()
+      );
+
+      // Only creator or admin can delete
+      allow delete: if isAuthenticated() &&
+        (isOwner(resource.data.createdById) || isAdmin());
+    }
+
+    // =============================================
+    // Messages Collection
+    // =============================================
+    match /messages/{messageId} {
+      // Only group members can read messages
+      allow read: if isAuthenticated() &&
+        get(/databases/$(database)/documents/study_groups/$(resource.data.groupId))
+          .data.members.hasAny([request.auth.uid]);
+
+      // Authenticated users can send messages (group membership checked server-side)
+      allow create: if isAuthenticated() &&
+        request.resource.data.senderId == request.auth.uid;
+
+      // Messages cannot be updated or deleted (immutable chat)
+      allow update, delete: if isAdmin();
+    }
+
+    // =============================================
+    // Events Collection
+    // =============================================
+    match /events/{eventId} {
+      // Anyone can read approved events; admin can read all
+      allow read: if isAuthenticated() && (
+        resource.data.status == 'approved' ||
+        isOwner(resource.data.organizerId) ||
+        isAdmin()
+      );
+
+      // Any authenticated user can create events (they start as pending)
+      allow create: if isAuthenticated() &&
+        request.resource.data.organizerId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+
+      // Only admin can update status; organizer can update other fields
+      allow update: if isAuthenticated() && (
+        isAdmin() ||
+        (isOwner(resource.data.organizerId) &&
+         request.resource.data.status == resource.data.status)
+      );
+
+      // Only admin or organizer can delete
+      allow delete: if isAuthenticated() &&
+        (isAdmin() || isOwner(resource.data.organizerId));
+    }
+
+    // =============================================
+    // Registrations Collection
+    // =============================================
+    match /registrations/{regId} {
+      // Users can read their own registrations; admin can read all
+      allow read: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Users can register themselves
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid;
+
+      // Users can unregister themselves; admin can delete any
+      allow delete: if isAuthenticated() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Registrations cannot be updated
+      allow update: if false;
+    }
+  }
+}
