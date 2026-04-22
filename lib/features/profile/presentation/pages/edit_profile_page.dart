@@ -111,7 +111,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             backgroundColor: AppColors.success,
           ),
         );
-        context.pop();
+        context.go('/profile');
       }
     } catch (e) {
       if (mounted) {

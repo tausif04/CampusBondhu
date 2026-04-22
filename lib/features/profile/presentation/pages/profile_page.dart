@@ -134,48 +134,9 @@ class ProfilePage extends ConsumerWidget {
                       const SizedBox(height: 12),
                     ],
                     const SizedBox(height: 8),
-                    // Logout button
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (_) => AlertDialog(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
-                            title: Text('Logout',
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontWeight: FontWeight.w700)),
-                            content: Text(
-                                'Are you sure you want to log out?',
-                                style: GoogleFonts.plusJakartaSans(
-                                    color: AppColors.textSecondary)),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: Text('Logout',
-                                    style: TextStyle(color: AppColors.error)),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirm == true) {
-                          await ref.read(authNotifierProvider.notifier).logout();
-                        }
-                      },
-                      icon: const Icon(Icons.logout_rounded, size: 18),
-                      label: const Text('Log Out'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ).animate(delay: 280.ms).fadeIn(),
+                    // Logout button — uses its own StatefulWidget to safely
+                    // handle async navigation without context-after-async issues
+                    const _LogoutButton(),
                     const SizedBox(height: 80),
                   ]),
                 ),
@@ -363,6 +324,92 @@ class _SectionCard extends StatelessWidget {
           const SizedBox(height: 12),
           child,
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Logout button as its own ConsumerStatefulWidget.
+// This is necessary because:
+//   1. ProfilePage is a ConsumerWidget — it has no `mounted` guard.
+//   2. When logout() invalidates providers, ProfilePage rebuilds mid-async,
+//      which causes navigator.dart assertion failures.
+//   3. A StatefulWidget has a proper `mounted` check and its own lifecycle,
+//      so the async logout + navigation is safe here.
+// ─────────────────────────────────────────────────────────────────────────────
+class _LogoutButton extends ConsumerStatefulWidget {
+  const _LogoutButton();
+
+  @override
+  ConsumerState<_LogoutButton> createState() => _LogoutButtonState();
+}
+
+class _LogoutButtonState extends ConsumerState<_LogoutButton> {
+  bool _isLoading = false;
+
+  Future<void> _handleLogout() async {
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Logout',
+            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        content: Text('Are you sure you want to log out?',
+            style: GoogleFonts.plusJakartaSans(
+                color: AppColors.textSecondary)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text('Logout',
+                style: const TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(authNotifierProvider.notifier).logout();
+    } finally {
+      // mounted check after every await — StatefulWidget makes this reliable
+      if (mounted) setState(() => _isLoading = false);
+    }
+
+    // Navigate after logout — mounted is reliable here because this is
+    // a StatefulWidget, unlike ConsumerWidget which has no mounted guard
+    if (mounted) context.go('/login');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _isLoading ? null : _handleLogout,
+      icon: _isLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: AppColors.error),
+            )
+          : const Icon(Icons.logout_rounded, size: 18),
+      label: Text(_isLoading ? 'Logging out...' : 'Log Out'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.error,
+        side: const BorderSide(color: AppColors.error),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }

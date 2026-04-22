@@ -45,28 +45,26 @@ class DefaultFirebaseOptions {
       appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDEMO_REPLACE_WITH_YOUR_ANDROID_API_KEY',
-    appId: '1:000000000000:android:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'campusbondhu-demo',
-    storageBucket: 'campusbondhu-demo.appspot.com',
-  );
+      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
+      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
+      projectId: "campusbondhu-a2d5b",
+      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
+      messagingSenderId: "8036376123",
+      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDEMO_REPLACE_WITH_YOUR_IOS_API_KEY',
-    appId: '1:000000000000:ios:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'campusbondhu-demo',
-    storageBucket: 'campusbondhu-demo.appspot.com',
-    iosBundleId: 'com.example.campusbondhu',
-  );
+      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
+      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
+      projectId: "campusbondhu-a2d5b",
+      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
+      messagingSenderId: "8036376123",
+      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDEMO_REPLACE_WITH_YOUR_MACOS_API_KEY',
-    appId: '1:000000000000:ios:0000000000000000000000',
-    messagingSenderId: '000000000000',
-    projectId: 'campusbondhu-demo',
-    storageBucket: 'campusbondhu-demo.appspot.com',
-    iosBundleId: 'com.example.campusbondhu',
-  );
+      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
+      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
+      projectId: "campusbondhu-a2d5b",
+      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
+      messagingSenderId: "8036376123",
+      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
 }

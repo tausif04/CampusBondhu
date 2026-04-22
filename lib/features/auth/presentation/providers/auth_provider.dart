@@ -8,19 +8,18 @@ final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
 });
 
-// Current user model
-final currentUserProvider = FutureProvider<UserModel?>((ref) async {
-  final authState = ref.watch(authStateProvider);
-  if (authState.valueOrNull == null) return null;
-  final service = ref.read(authServiceProvider);
-  return service.getCurrentUser();
+// Current user — real-time StreamProvider so profile updates (projects,
+// research, interests) are reflected immediately without manual invalidation
+final currentUserProvider = StreamProvider<UserModel?>((ref) {
+  return ref.watch(authServiceProvider).currentUserStream();
 });
 
 // Auth notifier for login/register actions
 class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   final AuthService _service;
+  final Ref _ref;
 
-  AuthNotifier(this._service) : super(const AsyncValue.data(null));
+  AuthNotifier(this._service, this._ref) : super(const AsyncValue.data(null));
 
   Future<void> login({
     required String emailOrUsername,
@@ -87,10 +86,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
   Future<void> logout() async {
     await _service.logout();
     state = const AsyncValue.data(null);
+    // Clear the cached current user so stale data
+    // is never shown when someone logs back in
+    _ref.invalidate(currentUserProvider);
   }
 }
 
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>((ref) {
-  return AuthNotifier(ref.read(authServiceProvider));
+  return AuthNotifier(ref.read(authServiceProvider), ref);
 });

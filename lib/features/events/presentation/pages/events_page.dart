@@ -37,7 +37,8 @@ class _EventsPageState extends ConsumerState<EventsPage> {
           SliverAppBar(
             pinned: true,
             backgroundColor: AppColors.background,
-            title: Text('Campus Events', style: Theme.of(context).textTheme.headlineLarge),
+            title: Text('Campus Events',
+                style: Theme.of(context).textTheme.headlineLarge),
             actions: [
               IconButton(
                 icon: const Icon(Icons.add_circle_outline_rounded),
@@ -57,8 +58,9 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                     TextField(
                       controller: _searchCtrl,
                       onChanged: (v) {
-                        ref.read(eventFilterProvider.notifier).update(
-                            (s) => s.copyWith(searchQuery: v));
+                        ref
+                            .read(eventFilterProvider.notifier)
+                            .update((s) => s.copyWith(searchQuery: v));
                       },
                       style: GoogleFonts.plusJakartaSans(fontSize: 14),
                       decoration: InputDecoration(
@@ -89,8 +91,8 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide:
-                              const BorderSide(color: AppColors.primary, width: 2),
+                          borderSide: const BorderSide(
+                              color: AppColors.primary, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
@@ -103,23 +105,29 @@ class _EventsPageState extends ConsumerState<EventsPage> {
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: [
-                          'Tech', 'Science', 'Arts', 'Sports', 'Career', 'Social'
+                          'Tech',
+                          'Science',
+                          'Arts',
+                          'Sports',
+                          'Career',
+                          'Social'
                         ]
                             .map((tag) => Padding(
                                   padding: const EdgeInsets.only(right: 8),
                                   child: InterestChip(
                                     label: tag,
-                                    isSelected: filter.selectedTags.contains(tag),
+                                    isSelected:
+                                        filter.selectedTags.contains(tag),
                                     onTap: () {
-                                      final current =
-                                          List<String>.from(filter.selectedTags);
+                                      final current = List<String>.from(
+                                          filter.selectedTags);
                                       current.contains(tag)
                                           ? current.remove(tag)
                                           : current.add(tag);
                                       ref
                                           .read(eventFilterProvider.notifier)
-                                          .update((s) =>
-                                              s.copyWith(selectedTags: current));
+                                          .update((s) => s.copyWith(
+                                              selectedTags: current));
                                     },
                                   ),
                                 ))
@@ -188,7 +196,8 @@ class EventCard extends StatelessWidget {
                     const BorderRadius.vertical(top: Radius.circular(15)),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
                   children: [
                     Container(
@@ -222,7 +231,10 @@ class EventCard extends StatelessWidget {
                 children: [
                   Text(
                     event.title,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 16),
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineMedium
+                        ?.copyWith(fontSize: 16),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),

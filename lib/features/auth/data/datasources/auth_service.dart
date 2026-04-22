@@ -151,6 +151,19 @@ class AuthService {
     return UserModel.fromFirestore(doc);
   }
 
+  // Real-time stream of current user — updates immediately when Firestore
+  // data changes (e.g. after edit profile saves new projects/research)
+  Stream<UserModel?> currentUserStream() {
+    return _auth.authStateChanges().asyncExpand((firebaseUser) {
+      if (firebaseUser == null) return Stream.value(null);
+      return _firestore
+          .collection(AppConstants.usersCollection)
+          .doc(firebaseUser.uid)
+          .snapshots()
+          .map((doc) => doc.exists ? UserModel.fromFirestore(doc) : null);
+    });
+  }
+
   Future<void> logout() async {
     await _auth.signOut();
   }

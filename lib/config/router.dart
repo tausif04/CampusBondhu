@@ -36,47 +36,91 @@ class AppRoutes {
   static const adminUsers = '/admin/users';
 }
 
+class _RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+  bool _isLoggedIn = false;
+  bool _isAdmin = false;
+
+  _RouterNotifier(this._ref) {
+    // Listen to auth state changes and notify GoRouter to re-run redirect
+    _ref.listen(authStateProvider, (_, next) {
+      _isLoggedIn = next.valueOrNull != null;
+      notifyListeners();
+    });
+    _ref.listen(currentUserProvider, (_, next) {
+      _isAdmin = next.valueOrNull?.isAdmin ?? false;
+      notifyListeners();
+    });
+  }
+
+  bool get isLoggedIn => _isLoggedIn;
+  bool get isAdmin => _isAdmin;
+}
+
+// The router is created once and cached for the lifetime of the app.
+// Using keepAlive: true ensures Riverpod never disposes and recreates it.
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
-  final currentUser = ref.watch(currentUserProvider);
+  final notifier = _RouterNotifier(ref);
 
-  return GoRouter(
-    initialLocation: AppRoutes.login,
+  final router = GoRouter(
+    // Start at splash '/' — redirect will immediately send to the right place.
+    // On web, GoRouter reads the current browser URL hash on first load, so
+    // if the user is at /#/events and reloads, GoRouter sees /events as the
+    // initial location and the redirect preserves it.
+    initialLocation: AppRoutes.splash,
+
+    // refreshListenable tells GoRouter to re-run redirect when auth changes,
+    // WITHOUT creating a new router. This is what keeps the current page
+    // intact on reload.
+    refreshListenable: notifier,
+
     redirect: (context, state) {
-      final isLoggedIn = authState.valueOrNull != null;
-      final isLoginPage = state.matchedLocation == AppRoutes.login ||
-          state.matchedLocation == AppRoutes.register;
+      final loc = state.matchedLocation;
+      final isLoggedIn = notifier.isLoggedIn;
+      final isAuthLoading = ref.read(authStateProvider).isLoading;
 
-      if (!isLoggedIn && !isLoginPage) return AppRoutes.login;
-      if (isLoggedIn && isLoginPage) return AppRoutes.home;
+      // While Firebase is initialising, don't redirect anywhere
+      if (isAuthLoading) return null;
 
-      // Admin route guard — only isAdmin users may access /admin/*
-      if (state.matchedLocation.startsWith('/admin')) {
-        final user = currentUser.valueOrNull;
-        if (user == null || !user.isAdmin) return AppRoutes.home;
+      final isAuthPage = loc == AppRoutes.login || loc == AppRoutes.register;
+      final isSplash = loc == AppRoutes.splash;
+
+      // Not logged in → force to login (unless already there)
+      if (!isLoggedIn && !isAuthPage) return AppRoutes.login;
+
+      // Logged in + on auth page or bare splash → go to home
+      if (isLoggedIn && (isAuthPage || isSplash)) return AppRoutes.home;
+
+      // Admin guard
+      if (loc.startsWith('/admin') && !notifier.isAdmin) return AppRoutes.home;
+
+      if (state.matchedLocation == '/events/create') {
+        return '/events/create';
       }
 
+      // Logged in, valid page → stay exactly where they are
       return null;
     },
+
     routes: [
       GoRoute(
         path: AppRoutes.login,
-        pageBuilder: (ctx, state) => _fadeTransition(state, const LoginPage()),
+        pageBuilder: (ctx, state) => _fade(state, const LoginPage()),
       ),
       GoRoute(
         path: AppRoutes.register,
-        pageBuilder: (ctx, state) => _fadeTransition(state, const RegisterPage()),
+        pageBuilder: (ctx, state) => _fade(state, const RegisterPage()),
       ),
       ShellRoute(
         builder: (ctx, state, child) => ShellScaffold(child: child),
         routes: [
           GoRoute(
             path: AppRoutes.home,
-            pageBuilder: (ctx, state) => _fadeTransition(state, const HomePage()),
+            pageBuilder: (ctx, state) => _fade(state, const HomePage()),
           ),
           GoRoute(
             path: AppRoutes.studyBuddy,
-            pageBuilder: (ctx, state) => _fadeTransition(state, const StudyBuddyPage()),
+            pageBuilder: (ctx, state) => _fade(state, const StudyBuddyPage()),
             routes: [
               GoRoute(
                 path: 'chat/:groupId',
@@ -92,23 +136,23 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.events,
-            pageBuilder: (ctx, state) => _fadeTransition(state, const EventsPage()),
+            pageBuilder: (ctx, state) => _fade(state, const EventsPage()),
             routes: [
+              GoRoute(
+                path: 'create',
+                builder: (ctx, state) => const CreateEventPage(),
+              ),
               GoRoute(
                 path: ':eventId',
                 builder: (ctx, state) => EventDetailPage(
                   eventId: state.pathParameters['eventId']!,
                 ),
               ),
-              GoRoute(
-                path: 'create',
-                builder: (ctx, state) => const CreateEventPage(),
-              ),
             ],
           ),
           GoRoute(
             path: AppRoutes.profile,
-            pageBuilder: (ctx, state) => _fadeTransition(state, const ProfilePage()),
+            pageBuilder: (ctx, state) => _fade(state, const ProfilePage()),
             routes: [
               GoRoute(
                 path: 'edit',
@@ -118,7 +162,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      // Admin routes (separate shell)
+      // Admin — outside shell (no bottom nav)
       GoRoute(
         path: AppRoutes.adminDashboard,
         builder: (ctx, state) => const AdminDashboardPage(),
@@ -135,15 +179,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
-});
 
-CustomTransitionPage _fadeTransition(GoRouterState state, Widget child) {
+  // Dispose notifier when provider is disposed
+  ref.onDispose(notifier.dispose);
+
+  return router;
+}, dependencies: [authStateProvider, currentUserProvider]);
+
+CustomTransitionPage _fade(GoRouterState state, Widget child) {
   return CustomTransitionPage(
     key: state.pageKey,
     child: child,
     transitionDuration: const Duration(milliseconds: 250),
-    transitionsBuilder: (ctx, animation, secondary, child) {
-      return FadeTransition(opacity: animation, child: child);
-    },
+    transitionsBuilder: (ctx, animation, _, child) =>
+        FadeTransition(opacity: animation, child: child),
   );
 }

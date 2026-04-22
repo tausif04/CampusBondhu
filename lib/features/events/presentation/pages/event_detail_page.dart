@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:campusbondhu/core/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import 'package:campusbondhu/core/widgets/cb_button.dart';
 import 'package:campusbondhu/features/auth/presentation/providers/auth_provider.dart';
 import 'package:campusbondhu/features/events/data/datasources/event_service.dart';
 import 'package:campusbondhu/features/events/data/models/event_model.dart';
+import 'package:campusbondhu/features/events/presentation/pages/create_event_page.dart';
 import 'package:campusbondhu/features/events/presentation/providers/event_provider.dart';
 
 class EventDetailPage extends ConsumerStatefulWidget {
@@ -19,6 +21,17 @@ class EventDetailPage extends ConsumerStatefulWidget {
 }
 
 class _EventDetailPageState extends ConsumerState<EventDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    // If 'create' is passed as eventId, redirect to create event page
+    if (widget.eventId == 'create') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.replace('/events/create');
+      });
+    }
+  }
+
   bool _isRegistering = false;
 
   Future<void> _toggleRegistration(
@@ -35,7 +48,8 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+          SnackBar(
+              content: Text('Error: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -63,7 +77,8 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
             data: (user) {
               if (user == null) return const SizedBox();
               final regArgs = (userId: user.id, eventId: widget.eventId);
-              final isRegisteredAsync = ref.watch(registrationProvider(regArgs));
+              final isRegisteredAsync =
+                  ref.watch(registrationProvider(regArgs));
               final isRegistered = isRegisteredAsync.valueOrNull ?? false;
 
               return CustomScrollView(
@@ -102,13 +117,15 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                           children: [
                             _InfoPill(
                               icon: Icons.calendar_today_rounded,
-                              label: DateFormat('MMM d, y').format(event.dateTime),
+                              label:
+                                  DateFormat('MMM d, y').format(event.dateTime),
                               color: AppColors.primary,
                             ),
                             const SizedBox(width: 10),
                             _InfoPill(
                               icon: Icons.access_time_rounded,
-                              label: DateFormat('h:mm a').format(event.dateTime),
+                              label:
+                                  DateFormat('h:mm a').format(event.dateTime),
                               color: AppColors.secondary,
                             ),
                           ],
@@ -124,7 +141,8 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                           children: [
                             CircleAvatar(
                               radius: 20,
-                              backgroundColor: AppColors.primary.withOpacity(0.1),
+                              backgroundColor:
+                                  AppColors.primary.withOpacity(0.1),
                               child: Text(
                                 event.organizerName.isNotEmpty
                                     ? event.organizerName[0].toUpperCase()
@@ -175,8 +193,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                         ).animate().fadeIn(delay: 250.ms),
                         const SizedBox(height: 24),
                         Text('About this Event',
-                            style:
-                                Theme.of(context).textTheme.headlineMedium),
+                            style: Theme.of(context).textTheme.headlineMedium),
                         const SizedBox(height: 10),
                         Text(
                           event.description,
@@ -184,8 +201,7 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                               .textTheme
                               .bodyLarge
                               ?.copyWith(
-                                  height: 1.6,
-                                  color: AppColors.textSecondary),
+                                  height: 1.6, color: AppColors.textSecondary),
                         ).animate().fadeIn(delay: 300.ms),
                         const SizedBox(height: 24),
                         if (event.tags.isNotEmpty)
@@ -197,10 +213,9 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 12, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary
-                                            .withOpacity(0.08),
-                                        borderRadius:
-                                            BorderRadius.circular(20),
+                                        color:
+                                            AppColors.primary.withOpacity(0.08),
+                                        borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
                                             color: AppColors.primary
                                                 .withOpacity(0.2)),
@@ -244,9 +259,8 @@ class _EventDetailPageState extends ConsumerState<EventDetailPage> {
                 ],
               ),
               child: CbButton(
-                label: isRegistered
-                    ? 'Cancel Registration'
-                    : 'Register for Event',
+                label:
+                    isRegistered ? 'Cancel Registration' : 'Register for Event',
                 icon: isRegistered
                     ? Icons.cancel_outlined
                     : Icons.how_to_reg_rounded,
