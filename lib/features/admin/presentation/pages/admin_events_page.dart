@@ -8,6 +8,7 @@ import 'package:campusbondhu/core/theme/app_theme.dart';
 import 'package:campusbondhu/features/events/data/datasources/event_service.dart';
 import 'package:campusbondhu/features/events/data/models/event_model.dart';
 import 'package:campusbondhu/features/events/presentation/providers/event_provider.dart';
+import 'package:campusbondhu/features/notifications/notification_service.dart';
 
 class AdminEventsPage extends ConsumerStatefulWidget {
   const AdminEventsPage({super.key});
@@ -32,26 +33,26 @@ class _AdminEventsPageState extends ConsumerState<AdminEventsPage>
     super.dispose();
   }
 
-  Future<void> _updateStatus(String eventId, String status) async {
+  Future<void> _updateStatus(String eventId, String status, {String? organizerId, String? eventTitle}) async {
     try {
       await ref.read(eventServiceProvider).updateStatus(eventId, status);
+      if (organizerId != null && eventTitle != null) {
+        try {
+          await ref.read(notificationServiceProvider).notifyEventStatus(
+            organizerId: organizerId, eventTitle: eventTitle,
+            eventId: eventId, approved: status == AppConstants.statusApproved);
+        } catch (_) {}
+      }
       ref.invalidate(allEventsProvider);
       ref.invalidate(pendingEventsProvider);
       ref.invalidate(approvedEventsProvider);
-
       if (mounted) {
         final label = status == AppConstants.statusApproved ? 'Approved' : 'Rejected';
         final color = status == AppConstants.statusApproved ? AppColors.success : AppColors.error;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Event $label!'), backgroundColor: color),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Event \$label!'), backgroundColor: color));
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: \$e'), backgroundColor: AppColors.error));
     }
   }
 

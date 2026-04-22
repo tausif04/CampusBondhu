@@ -10,6 +10,8 @@ import 'package:campusbondhu/features/events/data/models/event_model.dart';
 import 'package:campusbondhu/features/events/presentation/providers/event_provider.dart';
 import 'package:campusbondhu/features/study_buddy/data/models/study_group_model.dart';
 import 'package:campusbondhu/features/study_buddy/presentation/providers/study_group_provider.dart';
+import 'package:campusbondhu/features/notifications/notification_service.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -113,19 +115,67 @@ class _HomeHeader extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.notifications_outlined, size: 22),
-              color: AppColors.textPrimary,
-              onPressed: () {},
-            ),
+          Consumer(
+            builder: (context, ref, _) {
+              final userAsync = ref.watch(currentUserProvider);
+              final userId = userAsync.valueOrNull?.id ?? '';
+              final unreadAsync = userId.isNotEmpty
+                  ? ref.watch(unreadCountProvider(userId))
+                  : const AsyncData(0);
+              final unread = unreadAsync.valueOrNull ?? 0;
+
+              return GestureDetector(
+                onTap: () {
+                  if (userId.isEmpty) return;
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => _NotificationPanel(userId: userId, ref: ref),
+                  );
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Center(
+                        child: Icon(Icons.notifications_outlined,
+                            size: 22, color: AppColors.textPrimary),
+                      ),
+                      if (unread > 0)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                unread > 9 ? '9+' : unread.toString(),
+                                style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -683,6 +733,211 @@ class _ErrorCard extends StatelessWidget {
       child: Text('Error loading data',
           style: GoogleFonts.plusJakartaSans(
               fontSize: 13, color: AppColors.error)),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification Panel — bottom sheet showing all notifications
+// ─────────────────────────────────────────────────────────────────────────────
+class _NotificationPanel extends StatelessWidget {
+  final String userId;
+  final WidgetRef ref;
+  const _NotificationPanel({required this.userId, required this.ref});
+
+  IconData _iconForType(String type) {
+    switch (type) {
+      case 'message': return Icons.chat_bubble_rounded;
+      case 'event_approved': return Icons.check_circle_rounded;
+      case 'event_rejected': return Icons.cancel_rounded;
+      case 'event_upcoming': return Icons.event_rounded;
+      default: return Icons.notifications_rounded;
+    }
+  }
+
+  Color _colorForType(String type) {
+    switch (type) {
+      case 'message': return AppColors.primary;
+      case 'event_approved': return AppColors.success;
+      case 'event_rejected': return AppColors.error;
+      case 'event_upcoming': return AppColors.secondary;
+      default: return AppColors.textSecondary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final notifAsync = ref.watch(notificationsProvider(userId));
+    final service = ref.read(notificationServiceProvider);
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
+      builder: (_, ctrl) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Handle
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2)),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+              child: Row(
+                children: [
+                  Text('Notifications',
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 18, fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => service.markAllRead(userId),
+                    child: Text('Mark all read',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // List
+            Expanded(
+              child: notifAsync.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Error: $e')),
+                data: (notifications) {
+                  if (notifications.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.notifications_off_outlined,
+                              size: 48,
+                              color: AppColors.textTertiary),
+                          const SizedBox(height: 12),
+                          Text('No notifications yet',
+                              style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary)),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    controller: ctrl,
+                    itemCount: notifications.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, indent: 72),
+                    itemBuilder: (context, i) {
+                      final n = notifications[i];
+                      return Dismissible(
+                        key: Key(n.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) => service.deleteNotification(n.id),
+                        background: Container(
+                          color: AppColors.error.withOpacity(0.1),
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20),
+                          child: const Icon(Icons.delete_outline,
+                              color: AppColors.error),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            service.markRead(n.id);
+                            if (n.routePath != null) {
+                              Navigator.pop(context);
+                              GoRouter.of(context).go(n.routePath!);
+                            }
+                          },
+                          child: Container(
+                            color: n.isRead
+                                ? Colors.transparent
+                                : AppColors.primary.withOpacity(0.04),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 14),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: _colorForType(n.type)
+                                        .withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    _iconForType(n.type),
+                                    color: _colorForType(n.type),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(children: [
+                                        Expanded(
+                                          child: Text(n.title,
+                                              style: GoogleFonts.plusJakartaSans(
+                                                  fontSize: 13,
+                                                  fontWeight: n.isRead
+                                                      ? FontWeight.w500
+                                                      : FontWeight.w700,
+                                                  color:
+                                                      AppColors.textPrimary)),
+                                        ),
+                                        if (!n.isRead)
+                                          Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.primary,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                      ]),
+                                      const SizedBox(height: 2),
+                                      Text(n.body,
+                                          style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 12,
+                                              color: AppColors.textSecondary)),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        timeago.format(n.createdAt),
+                                        style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 10,
+                                            color: AppColors.textTertiary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

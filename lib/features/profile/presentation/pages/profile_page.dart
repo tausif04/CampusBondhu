@@ -27,7 +27,8 @@ class ProfilePage extends ConsumerWidget {
               SliverAppBar(
                 pinned: true,
                 backgroundColor: AppColors.background,
-                title: Text('Profile', style: Theme.of(context).textTheme.headlineLarge),
+                title: Text('Profile',
+                    style: Theme.of(context).textTheme.headlineLarge),
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.edit_outlined),
@@ -48,13 +49,11 @@ class ProfilePage extends ConsumerWidget {
                         title: 'About',
                         child: Text(
                           user.bio!,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyLarge
-                              ?.copyWith(
-                                height: 1.6,
-                                color: AppColors.textSecondary,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    height: 1.6,
+                                    color: AppColors.textSecondary,
+                                  ),
                         ),
                       ).animate(delay: 80.ms).fadeIn(),
                       const SizedBox(height: 12),
@@ -71,7 +70,8 @@ class ProfilePage extends ConsumerWidget {
                           spacing: 8,
                           runSpacing: 8,
                           children: user.interests
-                              .map((i) => InterestChip(label: i, isSelected: true))
+                              .map((i) =>
+                                  InterestChip(label: i, isSelected: true))
                               .toList(),
                         ),
                       ).animate(delay: 160.ms).fadeIn(),
@@ -86,7 +86,8 @@ class ProfilePage extends ConsumerWidget {
                               .map((p) => Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const Icon(Icons.arrow_right_rounded,
                                             color: AppColors.primary, size: 20),
@@ -114,7 +115,8 @@ class ProfilePage extends ConsumerWidget {
                               .map((r) => Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const Icon(Icons.science_outlined,
                                             color: AppColors.accent, size: 16),
@@ -134,6 +136,11 @@ class ProfilePage extends ConsumerWidget {
                       const SizedBox(height: 12),
                     ],
                     const SizedBox(height: 8),
+                    // Admin Panel button — only visible to admin users
+                    if (user.isAdmin) ...[
+                      _AdminPanelButton(),
+                      const SizedBox(height: 10),
+                    ],
                     // Logout button — uses its own StatefulWidget to safely
                     // handle async navigation without context-after-async issues
                     const _LogoutButton(),
@@ -210,12 +217,15 @@ class _ProfileHeader extends StatelessWidget {
           Text(
             '@${user.username}',
             style: GoogleFonts.plusJakartaSans(
-                fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w600),
+                fontSize: 13,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
             user.email,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
+            style:
+                Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
           ),
           if (user.isAdmin) ...[
             const SizedBox(height: 8),
@@ -224,8 +234,7 @@ class _ProfileHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.warning.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
-                border:
-                    Border.all(color: AppColors.warning.withOpacity(0.3)),
+                border: Border.all(color: AppColors.warning.withOpacity(0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -256,14 +265,24 @@ class _EducationSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _InfoRow(icon: Icons.school_rounded, label: 'Institution', value: user.institution),
+        _InfoRow(
+            icon: Icons.school_rounded,
+            label: 'Institution',
+            value: user.institution),
         const SizedBox(height: 8),
-        _InfoRow(icon: Icons.book_rounded, label: 'Department', value: user.department),
+        _InfoRow(
+            icon: Icons.book_rounded,
+            label: 'Department',
+            value: user.department),
         const SizedBox(height: 8),
-        _InfoRow(icon: Icons.calendar_month_rounded, label: 'Year / Semester', value: user.yearSemester),
+        _InfoRow(
+            icon: Icons.calendar_month_rounded,
+            label: 'Year / Semester',
+            value: user.yearSemester),
         if (user.phone != null) ...[
           const SizedBox(height: 8),
-          _InfoRow(icon: Icons.phone_rounded, label: 'Phone', value: user.phone!),
+          _InfoRow(
+              icon: Icons.phone_rounded, label: 'Phone', value: user.phone!),
         ],
       ],
     );
@@ -273,7 +292,8 @@ class _EducationSection extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label, value;
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _InfoRow(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -320,7 +340,11 @@ class _SectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontSize: 15)),
+          Text(title,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineMedium
+                  ?.copyWith(fontSize: 15)),
           const SizedBox(height: 12),
           child,
         ],
@@ -353,13 +377,11 @@ class _LogoutButtonState extends ConsumerState<_LogoutButton> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Logout',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
         content: Text('Are you sure you want to log out?',
-            style: GoogleFonts.plusJakartaSans(
-                color: AppColors.textSecondary)),
+            style: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -367,8 +389,8 @@ class _LogoutButtonState extends ConsumerState<_LogoutButton> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('Logout',
-                style: const TextStyle(color: AppColors.error)),
+            child:
+                Text('Logout', style: const TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -408,8 +430,72 @@ class _LogoutButtonState extends ConsumerState<_LogoutButton> {
         foregroundColor: AppColors.error,
         side: const BorderSide(color: AppColors.error),
         padding: const EdgeInsets.symmetric(vertical: 14),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin Panel button — only rendered when user.isAdmin == true
+// ─────────────────────────────────────────────────────────────────────────────
+class _AdminPanelButton extends StatelessWidget {
+  const _AdminPanelButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go('/admin'),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.warning.withOpacity(0.15),
+                AppColors.warning.withOpacity(0.05),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.warning.withOpacity(0.4)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.admin_panel_settings_rounded,
+                    color: AppColors.warning, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Admin Panel',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary)),
+                    Text('Manage users, events & groups',
+                        style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.warning, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }

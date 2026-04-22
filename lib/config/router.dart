@@ -16,6 +16,7 @@ import 'package:campusbondhu/features/profile/presentation/pages/edit_profile_pa
 import 'package:campusbondhu/features/admin/presentation/pages/admin_dashboard_page.dart';
 import 'package:campusbondhu/features/admin/presentation/pages/admin_events_page.dart';
 import 'package:campusbondhu/features/admin/presentation/pages/admin_users_page.dart';
+import 'package:campusbondhu/features/admin/presentation/pages/admin_groups_page.dart';
 import 'package:campusbondhu/config/shell_scaffold.dart';
 
 class AppRoutes {
@@ -34,8 +35,17 @@ class AppRoutes {
   static const adminDashboard = '/admin';
   static const adminEvents = '/admin/events';
   static const adminUsers = '/admin/users';
+  static const adminGroups = '/admin/groups';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RouterNotifier — a ChangeNotifier that listens to Riverpod auth providers
+// and calls notifyListeners() when auth state changes.
+// GoRouter uses this as a refreshListenable, so it re-evaluates the redirect
+// WITHOUT recreating the router instance. This is the key fix for the
+// "reload always goes to home page" problem: the router is created ONCE and
+// only its redirect logic is re-run when auth changes.
+// ─────────────────────────────────────────────────────────────────────────────
 class _RouterNotifier extends ChangeNotifier {
   final Ref _ref;
   bool _isLoggedIn = false;
@@ -174,6 +184,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: 'users',
             builder: (ctx, state) => const AdminUsersPage(),
+          ),
+          GoRoute(
+            path: 'groups',
+            builder: (ctx, state) => const AdminGroupsPage(),
           ),
         ],
       ),

@@ -1,13 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:campusbondhu/core/constants/app_constants.dart';
+import 'package:campusbondhu/features/notifications/notification_service.dart';
 import 'package:campusbondhu/features/study_buddy/data/models/study_group_model.dart';
 
 final studyGroupServiceProvider =
-    Provider<StudyGroupService>((ref) => StudyGroupService());
+    Provider<StudyGroupService>((ref) => StudyGroupService(ref.read(notificationServiceProvider)));
 
 class StudyGroupService {
   final _db = FirebaseFirestore.instance;
+  final NotificationService _notifService;
+  StudyGroupService(this._notifService);
   CollectionReference get _groups =>
       _db.collection(AppConstants.studyGroupsCollection);
   CollectionReference get _messages =>
@@ -82,6 +85,24 @@ class StudyGroupService {
     });
 
     await batch.commit();
+
+    // Notify all group members about the new message
+    try {
+      final groupDoc = await _groups.doc(message.groupId).get();
+      if (groupDoc.exists) {
+        final data = groupDoc.data() as Map<String, dynamic>;
+        final members = List<String>.from(data['members'] ?? []);
+        final groupName = data['name'] ?? 'a group';
+        await _notifService.notifyNewMessage(
+          memberIds: members,
+          senderId: message.senderId,
+          senderName: message.senderName,
+          groupName: groupName,
+          groupId: message.groupId,
+          messageText: message.text,
+        );
+      }
+    } catch (_) {}
   }
 
   // Stream messages — ordered by timestamp (requires composite index)
@@ -93,6 +114,11 @@ class StudyGroupService {
         .orderBy('timestamp', descending: false)
         .snapshots()
         .map((s) => s.docs.map(MessageModel.fromFirestore).toList());
+  }
+
+  // Delete group (admin)
+  Future<void> deleteGroup(String groupId) async {
+    await _groups.doc(groupId).delete();
   }
 
   // Get single group

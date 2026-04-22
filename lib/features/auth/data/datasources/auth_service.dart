@@ -184,4 +184,25 @@ class AuthService {
     await ref.putFile(image);
     return ref.getDownloadURL();
   }
+
+  // Suspend or unsuspend a user
+  Future<void> toggleSuspend(String uid, bool suspend) async {
+    await _firestore
+        .collection(AppConstants.usersCollection)
+        .doc(uid)
+        .update({'isSuspended': suspend});
+  }
+
+  // Stream all users (admin)
+  Stream<List<UserModel>> getAllUsersStream() {
+    return _firestore
+        .collection(AppConstants.usersCollection)
+        .snapshots()
+        .map((s) {
+          final users = s.docs.map(UserModel.fromFirestore).toList();
+          // Sort client-side to avoid needing a Firestore composite index
+          users.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return users;
+        });
+  }
 }

@@ -5,6 +5,7 @@ class AppConstants {
   static const String messagesCollection = 'messages';
   static const String eventsCollection = 'events';
   static const String registrationsCollection = 'registrations';
+  static const String notificationsCollection = 'notifications';
 
   // Firebase Storage Paths
   static const String profileImagesPath = 'profile_images';
