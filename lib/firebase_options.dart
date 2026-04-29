@@ -37,34 +37,17 @@ class DefaultFirebaseOptions {
   // ── REPLACE every value below with your real Firebase config ──────────────
 
   static const FirebaseOptions web = FirebaseOptions(
-      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
-      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
-      projectId: "campusbondhu-a2d5b",
-      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
-      messagingSenderId: "8036376123",
-      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
+    //write your firebase apikey and other necessities 
+  );
 
   static const FirebaseOptions android = FirebaseOptions(
-      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
-      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
-      projectId: "campusbondhu-a2d5b",
-      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
-      messagingSenderId: "8036376123",
-      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
+  //write your firebase apikey and other necessities 
+  );
 
   static const FirebaseOptions ios = FirebaseOptions(
-      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
-      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
-      projectId: "campusbondhu-a2d5b",
-      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
-      messagingSenderId: "8036376123",
-      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
+  //write your firebase apikey and other necessities 
+  );
 
   static const FirebaseOptions macos = FirebaseOptions(
-      apiKey: "AIzaSyDInBav8E2beakYt_tqPuLjFqKA3OLpcR8",
-      authDomain: "campusbondhu-a2d5b.firebaseapp.com",
-      projectId: "campusbondhu-a2d5b",
-      storageBucket: "campusbondhu-a2d5b.firebasestorage.app",
-      messagingSenderId: "8036376123",
-      appId: "1:8036376123:web:4bbbf83a1f8233b274c61e");
+    //write your firebase apikey and other necessities 
 }
